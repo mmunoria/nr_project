@@ -17,21 +17,31 @@ class ImuBagReader:
         self.bag_path = bag_path
         self.topic_name = topic_name
 
-    def read_imu_data(self) -> Dict[str, List[float]]:
-        """
-        Read IMU data from a ROS 2 bag.
+    def get_storage_id(self) -> str:
+        metadata_file = os.path.join(self.bag_path, "metadata.yaml")
 
-        Returns a dictionary containing:
-            time
-            linear_acceleration_x/y/z
-            angular_velocity_x/y/z
-        """
+        if not os.path.exists(metadata_file):
+            return "mcap"
+
+        with open(metadata_file, "r") as f:
+            text = f.read()
+
+        if "storage_identifier: sqlite3" in text:
+            return "sqlite3"
+        if "storage_identifier: mcap" in text:
+            return "mcap"
+
+        return "mcap"
+
+    def read_imu_data(self) -> Dict[str, List[float]]:
         if not os.path.exists(self.bag_path):
             raise FileNotFoundError(f"Bag path does not exist: {self.bag_path}")
 
+        storage_id = self.get_storage_id()
+
         storage_options = rosbag2_py.StorageOptions(
             uri=self.bag_path,
-            storage_id='mcap'
+            storage_id=storage_id
         )
 
         converter_options = rosbag2_py.ConverterOptions(
@@ -74,7 +84,7 @@ class ImuBagReader:
 
             msg = deserialize_message(serialized_msg, msg_type)
 
-            t_sec = t * 1e-9  # nanoseconds to seconds
+            t_sec = t * 1e-9
             if first_time is None:
                 first_time = t_sec
 
@@ -94,17 +104,6 @@ class ImuBagReader:
         return data
 
 
-def plot_signal(ax, time1, y1, time2, y2, time3, y3, title, ylabel):
-    ax.plot(time1, y1, label="Before vibration")
-    ax.plot(time2, y2, label="During vibration")
-    ax.plot(time3, y3, label="After vibration")
-    ax.set_title(title)
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel(ylabel)
-    ax.grid(True)
-    ax.legend()
-
-
 def summarize_signal(name: str, values: List[float]):
     arr = np.array(values)
     print(f"{name}:")
@@ -116,16 +115,45 @@ def summarize_signal(name: str, values: List[float]):
     print()
 
 
+def make_single_plot(
+    save_path: str,
+    time1, y1,
+    time2, y2,
+    time3, y3,
+    title: str,
+    ylabel: str
+):
+    plt.figure(figsize=(10, 5))
+    plt.plot(time1, y1, label="Before vibration")
+    plt.plot(time2, y2, label="During vibration")
+    plt.plot(time3, y3, label="After vibration")
+    plt.title(title)
+    plt.xlabel("Time [s]")
+    plt.ylabel(ylabel)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.show()
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Read 3 ROS 2 bag files with IMU data and plot vibration-related signals."
+        description="Read 3 ROS 2 bag files with IMU data, plot signals, and save each plot."
     )
     parser.add_argument("--before_bag", required=True, help="Path to bag recorded before vibration")
     parser.add_argument("--during_bag", required=True, help="Path to bag recorded during vibration")
     parser.add_argument("--after_bag", required=True, help="Path to bag recorded after vibration")
     parser.add_argument("--topic", default="/imu", help="IMU topic name, default: /imu")
+    parser.add_argument(
+        "--output_dir",
+        default="imu_plots",
+        help="Directory to save individual plots"
+    )
 
     args = parser.parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
 
     before_reader = ImuBagReader(args.before_bag, args.topic)
     during_reader = ImuBagReader(args.during_bag, args.topic)
@@ -136,76 +164,49 @@ def main():
     after_data = after_reader.read_imu_data()
 
     print("\n=== Summary: BEFORE vibration ===")
+    summarize_signal("linear_acceleration.x", before_data["linear_acceleration_x"])
+    summarize_signal("linear_acceleration.y", before_data["linear_acceleration_y"])
     summarize_signal("linear_acceleration.z", before_data["linear_acceleration_z"])
     summarize_signal("angular_velocity.x", before_data["angular_velocity_x"])
     summarize_signal("angular_velocity.y", before_data["angular_velocity_y"])
     summarize_signal("angular_velocity.z", before_data["angular_velocity_z"])
 
     print("\n=== Summary: DURING vibration ===")
+    summarize_signal("linear_acceleration.x", during_data["linear_acceleration_x"])
+    summarize_signal("linear_acceleration.y", during_data["linear_acceleration_y"])
     summarize_signal("linear_acceleration.z", during_data["linear_acceleration_z"])
     summarize_signal("angular_velocity.x", during_data["angular_velocity_x"])
     summarize_signal("angular_velocity.y", during_data["angular_velocity_y"])
     summarize_signal("angular_velocity.z", during_data["angular_velocity_z"])
 
     print("\n=== Summary: AFTER vibration ===")
+    summarize_signal("linear_acceleration.x", after_data["linear_acceleration_x"])
+    summarize_signal("linear_acceleration.y", after_data["linear_acceleration_y"])
     summarize_signal("linear_acceleration.z", after_data["linear_acceleration_z"])
     summarize_signal("angular_velocity.x", after_data["angular_velocity_x"])
     summarize_signal("angular_velocity.y", after_data["angular_velocity_y"])
     summarize_signal("angular_velocity.z", after_data["angular_velocity_z"])
 
-    fig, axes = plt.subplots(3, 2, figsize=(14, 12))
-    fig.suptitle("IMU Comparison: Before, During, and After Vibrating Surface", fontsize=14)
+    plot_configs = [
+        ("linear_acceleration_x", "Linear Acceleration X", "m/s^2"),
+        ("linear_acceleration_y", "Linear Acceleration Y", "m/s^2"),
+        ("linear_acceleration_z", "Linear Acceleration Z", "m/s^2"),
+        ("angular_velocity_x", "Angular Velocity X", "rad/s"),
+        ("angular_velocity_y", "Angular Velocity Y", "rad/s"),
+        ("angular_velocity_z", "Angular Velocity Z", "rad/s"),
+    ]
 
-    plot_signal(
-        axes[0, 0],
-        before_data["time"], before_data["linear_acceleration_x"],
-        during_data["time"], during_data["linear_acceleration_x"],
-        after_data["time"], after_data["linear_acceleration_x"],
-        "Linear Acceleration X", "m/s^2"
-    )
-
-    plot_signal(
-        axes[0, 1],
-        before_data["time"], before_data["linear_acceleration_y"],
-        during_data["time"], during_data["linear_acceleration_y"],
-        after_data["time"], after_data["linear_acceleration_y"],
-        "Linear Acceleration Y", "m/s^2"
-    )
-
-    plot_signal(
-        axes[1, 0],
-        before_data["time"], before_data["linear_acceleration_z"],
-        during_data["time"], during_data["linear_acceleration_z"],
-        after_data["time"], after_data["linear_acceleration_z"],
-        "Linear Acceleration Z", "m/s^2"
-    )
-
-    plot_signal(
-        axes[1, 1],
-        before_data["time"], before_data["angular_velocity_x"],
-        during_data["time"], during_data["angular_velocity_x"],
-        after_data["time"], after_data["angular_velocity_x"],
-        "Angular Velocity X", "rad/s"
-    )
-
-    plot_signal(
-        axes[2, 0],
-        before_data["time"], before_data["angular_velocity_y"],
-        during_data["time"], during_data["angular_velocity_y"],
-        after_data["time"], after_data["angular_velocity_y"],
-        "Angular Velocity Y", "rad/s"
-    )
-
-    plot_signal(
-        axes[2, 1],
-        before_data["time"], before_data["angular_velocity_z"],
-        during_data["time"], during_data["angular_velocity_z"],
-        after_data["time"], after_data["angular_velocity_z"],
-        "Angular Velocity Z", "rad/s"
-    )
-
-    plt.tight_layout()
-    plt.show()
+    for key, title, ylabel in plot_configs:
+        filename = os.path.join(args.output_dir, f"{key}.png")
+        make_single_plot(
+            filename,
+            before_data["time"], before_data[key],
+            during_data["time"], during_data[key],
+            after_data["time"], after_data[key],
+            title,
+            ylabel
+        )
+        print(f"Saved plot: {filename}")
 
 
 if __name__ == "__main__":

@@ -1,164 +1,161 @@
 <?xml version="1.0"?>
 <sdf version="1.6">
-<world name="ring_world">
-<!-- Physics -->
-<physics type="ode">
-<real_time_update_rate>1000.0</real_time_update_rate>
-<max_step_size>0.001</max_step_size>
-<real_time_factor>1</real_time_factor>
-</physics>
-<!-- A global light source -->
-<include>
-<uri>model://sun</uri>
-</include>
-<!-- Ground plane -->
-<include>
-<uri>model://ground_plane</uri>
-</include>
-<!-- Ring Wall - Front (Normal color) -->
-<model name="wall_front">
-<static>true</static>
-<pose>2.5 0 0.5 0 0 0</pose>
-<link name="link">
-<collision name="collision">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-</collision>
-<visual name="visual">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-<material>
-Page 5<ambient>0.7 0.7 0.7 1</ambient>
-<diffuse>0.7 0.7 0.7 1</diffuse>
-</material>
-</visual>
-</link>
-</model>
-<!-- Ring Wall - Back (RED) -->
-<model name="wall_back_red">
-<static>true</static>
-<pose>-2.5 0 0.5 0 0 0</pose>
-<link name="link">
-<collision name="collision">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-</collision>
-<visual name="visual">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-<material>
-<ambient>1 0 0 1</ambient>
-<diffuse>1 0 0 1</diffuse>
-<specular>0.5 0 0 1</specular>
-</material>
-</visual>
-</link>
-</model>
-<!-- Ring Wall - Left -->
-<model name="wall_left">
-Page 6<static>true</static>
-<pose>0 2.5 0.5 0 0 1.5708</pose>
-<link name="link">
-<collision name="collision">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-</collision>
-<visual name="visual">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-<material>
-<ambient>0.7 0.7 0.7 1</ambient>
-<diffuse>0.7 0.7 0.7 1</diffuse>
-</material>
-</visual>
-</link>
-</model>
-<!-- Ring Wall - Right -->
-<model name="wall_right">
-<static>true</static>
-<pose>0 -2.5 0.5 0 0 1.5708</pose>
-<link name="link">
-<collision name="collision">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-</collision>
-Page 7<visual name="visual">
-<geometry>
-<box>
-<size>0.2 5 1</size>
-</box>
-</geometry>
-<material>
-<ambient>0.7 0.7 0.7 1</ambient>
-<diffuse>0.7 0.7 0.7 1</diffuse>
-</material>
-</visual>
-</link>
-</model>
-<!-- Vibrating Floor Tile near Red Wall -->
-<model name="vibrating_floor">
-<static>false</static>
-<pose>-2 0 0.01 0 0 0</pose>
-<link name="link">
-<inertial>
-<mass>100</mass>
-<inertia>
-<ixx>1.0</ixx>
-<iyy>1.0</iyy>
-<izz>1.0</izz>
-</inertia>
-</inertial>
-<collision name="collision">
-<geometry>
-<box>
-<size>1 1 0.02</size>
-</box>
-</geometry>
-</collision>
-<visual name="visual">
-<geometry>
-Page 8<box>
-<size>1 1 0.02</size>
-</box>
-</geometry>
-<material>
-<ambient>1 1 0 1</ambient>
-<diffuse>1 1 0 1</diffuse>
-</material>
-</visual>
-</link>
-<!-- Plugin to create vibration -->
-<plugin name="vibration_plugin"
-filename="libgazebo_ros_force.so">
-<ros>
-<namespace>/vibrating_floor</namespace>
-</ros>
-<link_name>link</link_name>
-<force_x>0</force_x>
-<force_y>0</force_y>
-<force_z>100</force_z>
-</plugin>
-</model>
-</world>
+  <world name="ring_world">
+
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors"/>
+    <plugin filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu"/>
+
+    <physics name="default_physics" type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_front">
+      <static>true</static>
+      <pose>2.5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+          <material>
+            <ambient>0.7 0.7 0.7 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_back_red">
+      <static>true</static>
+      <pose>-2.5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.5 0 0 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_left">
+      <static>true</static>
+      <pose>0 2.5 0.5 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+          <material>
+            <ambient>0.7 0.7 0.7 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_right">
+      <static>true</static>
+      <pose>0 -2.5 0.5 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 5 1</size></box></geometry>
+          <material>
+            <ambient>0.7 0.7 0.7 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="vibrating_floor">
+      <static>false</static>
+      <pose>-2 0 0.01 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>100.0</mass>
+          <inertia>
+            <ixx>1.0</ixx>
+            <iyy>1.0</iyy>
+            <izz>1.0</izz>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyz>0.0</iyz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
 </sdf>
