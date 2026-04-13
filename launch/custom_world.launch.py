@@ -11,7 +11,7 @@ def generate_launch_description():
     world_file_name = 'ring_world.world'
     world = os.path.join(os.path.expanduser('~'),'turtlebot3_custom_ws', 'worlds', world_file_name)
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'),'launch')
-    pkg_gazebo_ros = get_package_share_directory('pkg_gazebo_ros')
+    pkg_gazebo_ros = get_package_share_directory('ros_gz_sim')
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
