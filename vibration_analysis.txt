@@ -1,0 +1,6 @@
+In our IMU data, we observed that the robot produced much larger fluctuations while it was on the vibrating surface than before or after 
+that region. The most significant change appeared in linear_acceleration.z, which suggests that the vibration mainly affected the robot 
+in the vertical direction. We could clearly identify when the robot entered the vibrating zone because the IMU signals became more 
+oscillatory and their variance increased sharply. In a real robot, this behavior could be used to detect rough or vibrating terrain,
+monitor hardware health, and adapt navigation or control when the robot enters a disturbed environment.
+
