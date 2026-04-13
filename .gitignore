@@ -6,3 +6,4 @@ src/.vscode/
 __pycache__/
 *.pyc
 src/
+.venv/
