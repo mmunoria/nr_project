@@ -12,6 +12,10 @@
             name="gz::sim::systems::Sensors"/>
     <plugin filename="gz-sim-imu-system"
             name="gz::sim::systems::Imu"/>
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
 
     <physics name="default_physics" type="ode">
       <real_time_update_rate>1000.0</real_time_update_rate>
@@ -128,44 +132,5 @@
         </visual>
       </link>
     </model>
-
-    <model name="vibrating_floor">
-      <static>false</static>
-      <pose>-2 0 0.01 0 0 0</pose>
-      <link name="link">
-        <inertial>
-          <mass>100.0</mass>
-          <inertia>
-            <ixx>1.0</ixx>
-            <iyy>1.0</iyy>
-            <izz>1.0</izz>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyz>0.0</iyz>
-          </inertia>
-        </inertial>
-        <collision name="collision">
-          <geometry><box><size>1 1 0.02</size></box></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><box><size>1 1 0.02</size></box></geometry>
-          <material>
-            <ambient>1 1 0 1</ambient>
-            <diffuse>1 1 0 1</diffuse>
-          </material>
-        </visual>
-      </link>
-
-      <plugin name="vibration_plugin" filename="libgazebo_ros_force.so">
-        <ros>
-          <namespace>/vibrating_floor</namespace>
-        </ros>
-        <link_name>link</link_name>
-        <force_x>0</force_x>
-        <force_y>0</force_y>
-        <force_z>100</force_z>
-        </plugin>
-    </model>
-
   </world>
 </sdf>

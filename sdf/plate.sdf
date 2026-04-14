@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="plate" canonical_link='link1'>
+    <link name="link1">
+      <inertial>
+        <mass>100.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <iyy>1.0</iyy>
+          <izz>1.0</izz>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <geometry><box><size>1 1 0.02</size></box></geometry>
+      </collision>
+      <visual name="visual">
+        <geometry><box><size>1 1 0.02</size></box></geometry>
+        <material>
+          <ambient>1 1 0 1</ambient>
+          <diffuse>1 1 0 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
