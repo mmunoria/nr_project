@@ -11,8 +11,9 @@ from launch.substitutions import Command
 def generate_launch_description():
     world_path = os.path.join(
         os.path.expanduser("~"),
-        "NR",
-        "final_ws",
+        "Documents",
+        "NeuromorphicRobotics",
+        "nr_project",
         "worlds",
         "ring_world.world"
     )
