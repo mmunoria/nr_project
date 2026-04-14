@@ -21,7 +21,7 @@ class ColorDetector(Node):
         
     def image_callback(self, msg):
         """Process camera image to detect red color"""
-        self.get_logger().info('Image received!')
+        #self.get_logger().info('Image received!')
         try:
             # Convert ROS Image to OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
