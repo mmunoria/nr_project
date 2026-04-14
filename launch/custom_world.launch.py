@@ -77,6 +77,7 @@ def generate_launch_description():
         arguments=['/camera/image_raw'],
         output='screen',
     )
+    
     world = os.path.join(
         os.path.expanduser("~"),
         "Documents",
@@ -148,8 +149,16 @@ def generate_launch_description():
             '-Y', '0',
         ],
     )
+    
+    plate_state_publisher_node = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="robot_state_publisher",
+        output="screen",
+        parameters=[{"robot_description": Command(["xacro ", plate_path])}, {"use_sim_time": True}]
+    )
      
-    ld = LaunchDescription([rviz_node])
+    ld = LaunchDescription([rviz_node, plate_state_publisher_node])
 
     # Add the commands to the launch description
     ld.add_action(gzserver_cmd)
