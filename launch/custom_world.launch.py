@@ -15,9 +15,9 @@ def generate_launch_description():
     y_pose = LaunchConfiguration('y_pose', default='-0.5')
     ros_gz_sim = get_package_share_directory('ros_gz_sim')
     turtlebot3_description_dir = get_package_share_directory("turtlebot3_description")
-    turtlebot3_gazebo_dir = get_package_share_directory("turtlebot3_gazebo")
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
     model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
+    
     urdf_path = os.path.join(
         get_package_share_directory('turtlebot3_gazebo'),
         'models',
@@ -52,9 +52,12 @@ def generate_launch_description():
     )
 
     bridge_params = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
+        os.path.expanduser("~"),
+        "Documents",
+        "NeuromorphicRobotics",
+        "nr_project",
         'params',
-        model_folder+'_bridge.yaml'
+        'bridge.yaml'
     )
 
     start_gazebo_ros_bridge_cmd = Node(
