@@ -155,6 +155,16 @@
           </material>
         </visual>
       </link>
+
+      <plugin name="vibration_plugin" filename="libgazebo_ros_force.so">
+        <ros>
+          <namespace>/vibrating_floor</namespace>
+        </ros>
+        <link_name>link</link_name>
+        <force_x>0</force_x>
+        <force_y>0</force_y>
+        <force_z>100</force_z>
+        </plugin>
     </model>
 
   </world>

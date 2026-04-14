@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import Imu, LaserScan
 from nav_msgs.msg import Odometry
 import math
@@ -12,7 +12,7 @@ class BasicNavigator(Node):
         super().__init__('basic_navigator')
         
         # Publishers
-        self.cmd_vel_pub = self.create_publisher(Twist,'cmd_vel', 10)
+        self.cmd_vel_pub = self.create_publisher(TwistStamped,'cmd_vel', 10)
         
         # Subscribers
         self.imu_sub = self.create_subscription(Imu, 'imu', self.imu_callback, 10)
@@ -50,7 +50,7 @@ class BasicNavigator(Node):
         self.timer = self.create_timer(0.1, self.control_loop)
         self.get_logger().info('Basic Navigator Started!')
         self.get_logger().info('Speed: Linear={:.2f},Angular={:.2f}'.format(self.linear_speed, self.angular_speed))
-        self.get_logger().info('Using LIDAR for obstacledetection')
+        self.get_logger().info('Using LIDAR for obstacle detection')
         
     def scan_callback(self, msg):
         """Process Lidar data to detect obstacles"""
@@ -109,7 +109,8 @@ class BasicNavigator(Node):
     def control_loop(self):
         """Main control loop - different strategies for vibration vs obstacles"""
         
-        cmd = Twist()
+        cmd = TwistStamped()
+        cmd.header.stamp = self.get_clock().now().to_msg()
         
         # Priority 1: Check for vibration (highest priority)
         # Must REVERSE first to get off vibration plate, then turn
@@ -152,8 +153,8 @@ class BasicNavigator(Node):
                     
         # State machine logic
         if self.state == 'FORWARD':
-            cmd.linear.x = self.linear_speed
-            cmd.angular.z = 0.0
+            cmd.twist.linear.x = self.linear_speed
+            cmd.twist.angular.z = 0.0
             # Random exploration: occasionally turn to explore
             self.steps_since_last_turn += 1
             if self.steps_since_last_turn >= self.random_turn_interval:
@@ -172,19 +173,19 @@ class BasicNavigator(Node):
                 
         elif self.state == 'REVERSE':
         # Reverse to get off vibration plate
-            cmd.linear.x = -self.linear_speed * 0.8
-            cmd.angular.z = 0.0
+            cmd.twist.linear.x = -self.linear_speed * 0.8
+            cmd.twist.angular.z = 0.0
             self.turn_duration -= 1
             if self.turn_duration <= 0:
                 # After reversing, now turn toward open space
                 self.state = 'TURN'
                 self.turn_duration = 15
-                self.get_logger().info('Off vibration plate, nowturning...')
+                self.get_logger().info('Off vibration plate, now turning...')
                 
         elif self.state == 'TURN':
             # Turn in place toward the furthest direction
-            cmd.linear.x = 0.0
-            cmd.angular.z = self.angular_speed * self.random_turn_direction
+            cmd.twist.linear.x = 0.0
+            cmd.twist.angular.z = self.angular_speed * self.random_turn_direction
             self.turn_duration -= 1
             if self.turn_duration <= 0:
                 self.state = 'FORWARD'
@@ -204,7 +205,7 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     # Stop the robot
-    navigator.cmd_vel_pub.publish(Twist())
+    navigator.cmd_vel_pub.publish(TwistStamped())
     navigator.destroy_node()
     rclpy.shutdown()
     

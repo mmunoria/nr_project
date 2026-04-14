@@ -2,10 +2,10 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable, AppendEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
-from launch.substitutions import Command
+from launch.substitutions import Command, PythonExpression, LaunchConfiguration
 
 
 def generate_launch_description():
@@ -23,17 +23,15 @@ def generate_launch_description():
     turtlebot3_description_dir = get_package_share_directory("turtlebot3_description")
 
     model_path = os.path.join(turtlebot3_gazebo_dir, "models")
+    frame_prefix = LaunchConfiguration('frame_prefix', default='')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    urdf_path = os.path.join(
+        get_package_share_directory('turtlebot3_gazebo'),
+        'urdf',
+        'turtlebot3_waffle_pi.urdf')
 
-    xacro_file = os.path.join(
-        turtlebot3_description_dir,
-        "urdf",
-        "turtlebot3_waffle_pi.urdf"
-    )
-
-    # If your package only has xacro, change to .urdf.xacro and use xacro
-    robot_description = {
-        "robot_description": Command(["xacro ", xacro_file])
-    }
+    with open(urdf_path, 'r') as infp:
+        robot_desc = infp.read()
 
     gazebo_resource_path = SetEnvironmentVariable(
         name="GZ_SIM_RESOURCE_PATH",
@@ -85,7 +83,11 @@ def generate_launch_description():
         executable="robot_state_publisher",
         name="robot_state_publisher",
         output="screen",
-        parameters=[robot_description, {"use_sim_time": True}]
+        parameters=[{
+                'use_sim_time': use_sim_time,
+                'robot_description': robot_desc,
+                'frame_prefix': PythonExpression(["'", frame_prefix, "/'"])
+            }],
     )
 
     joint_state_publisher_node = Node(
@@ -110,6 +112,11 @@ def generate_launch_description():
         arguments=["-d", rviz_config],
         parameters=[{"use_sim_time": True}]
     )
+    set_env_vars_resources = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        os.path.join(
+        get_package_share_directory('turtlebot3_gazebo'),
+        'models'))
 
     return LaunchDescription([
         gazebo_resource_path,
@@ -119,4 +126,5 @@ def generate_launch_description():
         joint_state_publisher_node,
         spawn_turtlebot,
         rviz_node,
+        set_env_vars_resources
     ])
