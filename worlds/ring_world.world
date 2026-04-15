@@ -132,5 +132,71 @@
         </visual>
       </link>
     </model>
+    <model name="plate">
+      <pose>-2 0 0 0 0 0</pose>
+      <link name="link1">
+        <inertial>
+          <mass>10.0</mass>
+          <inertia>
+            <ixx>1.0</ixx>
+            <iyy>1.0</iyy>
+            <izz>1.0</izz>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyz>0.0</iyz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name="link2">
+        <inertial>
+          <mass>10.0</mass>
+          <inertia>
+            <ixx>1.0</ixx>
+            <iyy>1.0</iyy>
+            <izz>1.0</izz>
+            <ixy>0.0</ixy>
+            <ixz>0.0</ixz>
+            <iyz>0.0</iyz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1 1 0.02</size></box></geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+      <joint name="plate_joint" type="prismatic">
+        <pose>0 0 0.5 0 0 0</pose>
+        <parent>link1</parent>
+        <child>link2</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-1</lower>
+            <upper>1</upper>
+            <effort>1e6</effort> 
+          </limit>
+        </axis>
+      </joint>
+      <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
+        <joint_name>plate_joint</joint_name>
+        <initial_velocity>1.0</initial_velocity>
+      </plugin>
+    </model>
   </world>
 </sdf>

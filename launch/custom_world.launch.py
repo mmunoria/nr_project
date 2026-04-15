@@ -143,9 +143,9 @@ def generate_launch_description():
         arguments=[
             "-name", "plate",
             '-file', plate_path,
-            '-x', '-2',
+            '-x', '-1',
             '-y', '0',
-            '-z', '0.01',
+            '-z', '-0.04',
             '-Y', '0',
         ],
     )
@@ -158,7 +158,7 @@ def generate_launch_description():
         parameters=[{"robot_description": Command(["xacro ", plate_path])}, {"use_sim_time": True}]
     )
      
-    ld = LaunchDescription([rviz_node, plate_state_publisher_node])
+    ld = LaunchDescription([rviz_node])
 
     # Add the commands to the launch description
     ld.add_action(gzserver_cmd)
@@ -170,5 +170,5 @@ def generate_launch_description():
     ld.add_action(start_gazebo_ros_image_bridge_cmd) if TURTLEBOT3_MODEL != 'burger' else None
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(set_env_vars_resources)
-    ld.add_action(spawn_plate_cmd)
+    #ld.add_action(spawn_plate_cmd)
     return ld

@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
-<sdf version="1.6">
-  <model name="plate">
+  <robot name="plate" xmlns:xacro="http://ros.org/wiki/xacro">
     <link name="link1">
       <inertial>
         <mass>10.0</mass>
@@ -53,17 +52,7 @@
       <child>link2</child>
       <axis>
         <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1</lower>
-          <upper>1</upper>
-          <effort>1e6</effort> 
-        </limit>
       </axis>
     </joint>
-    <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
-      <joint_name>plate_joint</joint_name>
-      <initial_velocity>0.0</initial_velocity>
-      <topic>cmd_vel</topic>
-    </plugin>
   </model>
 </sdf>
