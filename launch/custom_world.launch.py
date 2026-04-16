@@ -25,10 +25,6 @@ def generate_launch_description():
         'model.sdf'
     )
 
-    # Launch configuration variables specific to simulation
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.0')
-
     # Declare the launch arguments
     declare_x_position_cmd = DeclareLaunchArgument(
         'x_pose', default_value='0.0',
@@ -44,9 +40,10 @@ def generate_launch_description():
         arguments=[
             '-name', TURTLEBOT3_MODEL,
             '-file', urdf_path,
-            '-x', x_pose,
-            '-y', y_pose,
-            '-z', '0.01'
+            '-Y', "3.14",
+            '-x', "-1.8",
+            '-y', "0.0",
+            '-z', '0.03'
         ],
         output='screen',
     )
@@ -136,27 +133,6 @@ def generate_launch_description():
         arguments=["-d",rviz_config],
         parameters=[{"use_sim_time": True}]
     )
-    
-    spawn_plate_cmd = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=[
-            "-name", "plate",
-            '-file', plate_path,
-            '-x', '-1',
-            '-y', '0',
-            '-z', '-0.04',
-            '-Y', '0',
-        ],
-    )
-    
-    plate_state_publisher_node = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        output="screen",
-        parameters=[{"robot_description": Command(["xacro ", plate_path])}, {"use_sim_time": True}]
-    )
      
     ld = LaunchDescription([rviz_node])
 
@@ -170,5 +146,4 @@ def generate_launch_description():
     ld.add_action(start_gazebo_ros_image_bridge_cmd) if TURTLEBOT3_MODEL != 'burger' else None
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(set_env_vars_resources)
-    #ld.add_action(spawn_plate_cmd)
     return ld
