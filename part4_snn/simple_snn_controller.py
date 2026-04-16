@@ -79,19 +79,52 @@ class SNNNavigator(Node):
         self.sim = nengo.Simulator(self.model, dt=0.001)
         
     def scan_callback(self, msg):
+        """Process Lidar data to detect obstacles"""
+        
+        # LaserScan gives 360 degree view
         ranges = np.array(msg.ranges)
+        
+        # Replace inf values with max range
         ranges[np.isinf(ranges)] = msg.range_max
-        n = len(ranges)
-        self.front_distance = np.min(np.concatenate([ranges[:int(n*0.04)], ranges[int(n*0.96):]]))
-        self.left_distance = np.mean(ranges[int(n*0.17):int(n*0.33)])
-        self.right_distance = np.mean(ranges[int(n*0.67):int(n*0.83)])
+        
+        # Divide scan into sectors
+        num_readings = len(ranges)
+        
+        # Front sector (±15 degrees around 0)
+        front_start = 0
+        front_end = int(num_readings * 15 / 360)
+        front_start_back = int(num_readings * 345 / 360)
+        front_readings = np.concatenate([ranges[front_start:front_end], ranges[front_start_back:]])
+        self.front_distance = np.min(front_readings) if len(front_readings) > 0 else float('inf')
+        
+        # Left sector (60-120 degrees)
+        left_start = int(num_readings * 60 / 360)
+        left_end = int(num_readings * 120 / 360)
+        left_readings = ranges[left_start:left_end]
+        self.left_distance = np.mean(left_readings) if len(left_readings) > 0 else float('inf')
+        
+        # Right sector (240-300 degrees)
+        right_start = int(num_readings * 240 / 360)
+        right_end = int(num_readings * 300 / 360)
+        right_readings = ranges[right_start:right_end]
+        self.right_distance = np.mean(right_readings) if len(right_readings) > 0 else float('inf')
         
     def imu_callback(self, msg):
-        self.recent_imu_z.append(msg.linear_acceleration.z)
+        """Process IMU data to detect vibration"""
+        
+        z_accel = msg.linear_acceleration.z
+        
+        # Store recent IMU readings
+        self.recent_imu_z.append(z_accel)
         if len(self.recent_imu_z) > 50:
             self.recent_imu_z.pop(0)
+            
+        # Calculate variance (measure of vibration)
         if len(self.recent_imu_z) >= 10:
-            self.imu_variance = np.var(self.recent_imu_z)
+            mean_z = sum(self.recent_imu_z) / len(self.recent_imu_z)
+            variance = sum((x - mean_z) ** 2 for x in
+            self.recent_imu_z) / len(self.recent_imu_z)
+            self.imu_variance = variance
             
     def image_callback(self, msg):
         try:
@@ -108,6 +141,7 @@ class SNNNavigator(Node):
         cs_fire = np.sum(self.sim.data[self.cs_probe][-1]) > 5
         us_fire = np.sum(self.sim.data[self.us_probe][-1]) > 5
         avoid_strength = np.mean(np.sum(self.sim.data[self.avoid_probe][-10:], axis=1))
+        
         # Hebbian learning
         if self.red_intensity > 10 and self.imu_variance > 2.0:
             self.weight += self.learning_rate * (self.red_intensity/100.0)
@@ -128,12 +162,12 @@ class SNNNavigator(Node):
         cmd.header.stamp = self.get_clock().now().to_msg()
         
         # Priority 1: Vibration
-        if self.imu_variance > 2.0 and self.state == 'FORWARD':
-            self.turn_direction = 1 if self.left_distance > self.right_distance else -1
+        if self.imu_variance > 40.0 and self.state == 'FORWARD':
+            self.turn_direction = 1 if (self.left_distance > self.right_distance) else -1
             self.state = 'REVERSE'
             self.turn_duration = 15
-            # Priority 2: Learned avoidance
             
+        # Priority 2: Learned avoidance 
         elif self.weight >= 0.5 and self.red_intensity > 10 and self.state == 'FORWARD': 
             self.turn_direction = 1 if self.left_distance > self.right_distance else -1
             self.state = 'TURN'
@@ -155,7 +189,7 @@ class SNNNavigator(Node):
                 self.turn_direction = random.choice([-1, 1])
                 self.turn_duration = random.randint(5, 30)
                 self.steps_since_turn = 0
-                self.next_random_turn = random.randint(50, 150)
+                self.next_random_turn = random.randint(150, 300)
             
         elif self.state == 'REVERSE':
             cmd.twist.linear.x = -0.8
@@ -166,11 +200,14 @@ class SNNNavigator(Node):
             
         elif self.state == 'TURN':
             cmd.twist.angular.z = 1.0 * self.turn_direction
-            self.turn_duration -= 1
+            self.turn_duration -= 3
             if self.turn_duration <= 0:
                 self.state = 'FORWARD'
                 self.steps_since_turn = 0
-                self.cmd_vel_pub.publish(cmd)
+                
+        self.cmd_vel_pub.publish(cmd)
+        self.get_logger().info(f'Executing state: {self.state}')
+
                 
     def plot_learning(self):
         fig, axes = plt.subplots(4, 1, figsize=(12, 10)) 
