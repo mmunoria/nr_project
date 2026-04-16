@@ -35,7 +35,7 @@ class BasicNavigator(Node):
         # Navigation parameters
         self.linear_speed = 1.0
         self.angular_speed = 1.0
-        self.vibration_threshold = 4.0
+        self.vibration_threshold = 20.0
         
         # State machine
         self.state = 'FORWARD' # States: FORWARD, TURN, REVERSE
